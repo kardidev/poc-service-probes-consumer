@@ -1,0 +1,62 @@
+#
+# Run and expose service to make it visible from outside via load balancer with ping probe enabled
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: consumer
+  name: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: consumer
+    spec:
+      containers:
+        - name: consumer
+          image: poc-service-probes-consumer:1.0-SNAPSHOT
+          imagePullPolicy: Never
+          resources: {}
+
+          livenessProbe:
+            httpGet:
+              path: /consumer/ping
+              port: 8080
+            # initial delay should be big enough to get your container started
+            initialDelaySeconds: 20
+            # liveness probes should be inexpensive and have fast response time to keep time period small
+            periodSeconds: 10
+            # Number of seconds after which the probe times out. Slow response can point out some serious issues.
+            timeoutSeconds: 5
+            # we have to make sure, that it's not a connection lag before restarting a pod
+            # this value should be considered together with "timeoutSeconds"
+            failureThreshold: 3
+
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: consumer
+  name: consumer
+spec:
+  ports:
+    - name: 8082-8080
+      port: 8082
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: consumer
+  type: LoadBalancer
+status:
+  loadBalancer: {}

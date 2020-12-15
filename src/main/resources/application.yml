@@ -1,0 +1,9 @@
+server:
+  servlet:
+    context-path: /consumer
+
+spring:
+  application:
+    name: consumer
+  jmx:
+    enabled: false
